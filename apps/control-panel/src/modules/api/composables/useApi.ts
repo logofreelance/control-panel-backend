@@ -5,6 +5,16 @@ import { env } from '@/lib/env';
 import type { ApiKey, CorsDomain, ConfirmDialogState } from '../types';
 import { fetchWithCsrf } from '@/lib/csrf';
 
+interface NodeHealth {
+    nodeId: string;
+    endpointUrl: string;
+    status: string;
+    cpuUsage: string;
+    memoryUsage: string;
+    uptime: number;
+    lastHeartbeat: string;
+}
+
 const L = MODULE_LABELS.api;
 
 export function useApi() {
@@ -17,6 +27,11 @@ export function useApi() {
     const [submitting, setSubmitting] = useState(false);
     const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(null);
 
+    // Active Nodes state
+    const [activeNodes, setActiveNodes] = useState<NodeHealth[]>([]);
+    const [selectedEndpoint, setSelectedEndpoint] = useState<string>('');
+    const [nodesLoading, setNodesLoading] = useState(true);
+
     // Refs for stable references
     const toastRef = useRef(addToast);
     const hasDataRef = useRef(false);
@@ -24,7 +39,6 @@ export function useApi() {
     useEffect(() => { toastRef.current = addToast; }, [addToast]);
 
     const fetchData = useCallback(async () => {
-        // Only show loading if we haven't loaded data yet (to prevent flash on re-renders)
         if (!hasDataRef.current) {
             setLoading(true);
         }
@@ -45,6 +59,26 @@ export function useApi() {
     }, []);
 
     useEffect(() => { fetchData(); }, [fetchData]);
+
+    // Fetch active nodes from nodes-health endpoint
+    const fetchActiveNodes = useCallback(async () => {
+        try {
+            const res = await fetch(`${env.API_BASE}/nodes-health`);
+            const json = await res.json();
+            if (json.status === 'success' && Array.isArray(json.data)) {
+                const nodes: NodeHealth[] = json.data;
+                setActiveNodes(nodes);
+                const onlineNode = nodes.find((n) => n.status === 'online');
+                if (onlineNode) setSelectedEndpoint(onlineNode.endpointUrl);
+            }
+        } catch (err) {
+            console.error('[API] Failed to fetch nodes:', err);
+        } finally {
+            setNodesLoading(false);
+        }
+    }, []);
+
+    useEffect(() => { fetchActiveNodes(); }, [fetchActiveNodes]);
 
     const handleCreateKey = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -143,5 +177,10 @@ export function useApi() {
         closeDeleteDialog,
         getConfirmDialogTitle,
         getConfirmDialogMessage,
+        // Nodes
+        activeNodes,
+        selectedEndpoint,
+        nodesLoading,
+        setSelectedEndpoint,
     };
 }

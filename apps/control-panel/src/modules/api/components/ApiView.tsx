@@ -1,7 +1,8 @@
+/* eslint-disable react/jsx-no-literals */
 'use client';
 
 // ApiView - API keys and CORS management
-// Manages API access keys and cross-origin domains
+// Manages API access keys, CORS domains, and active endpoint selection
 
 import { Button, Input, Badge } from '@cp/ui';
 import { Icons, MODULE_LABELS } from '@cp/config/client';
@@ -31,7 +32,12 @@ export const ApiView = () => {
         closeDeleteDialog,
         getConfirmDialogTitle,
         getConfirmDialogMessage,
+        activeNodes,
+        selectedEndpoint,
+        nodesLoading,
+        setSelectedEndpoint,
     } = useApi();
+
 
     const LoadingOverlay = () => (
         <div className="absolute inset-0 bg-white z-10 flex items-center justify-center rounded-xl">
@@ -100,7 +106,7 @@ export const ApiView = () => {
                         </div>
                     </div>
                     <div>
-                        <p className="text-sm font-mono font-medium text-[var(--primary)] truncate" title={env.BACKEND_SYSTEM_API}>{env.API_URL}</p>
+                        <p className="text-sm font-mono font-medium text-[var(--primary)] truncate" title={selectedEndpoint || env.BACKEND_SYSTEM_API}>{selectedEndpoint || env.API_URL}</p>
                         <p className="text-[10px] font-normal text-slate-400 mt-1">{L.stats.apiEndpoint}</p>
                     </div>
                 </div>
@@ -190,7 +196,82 @@ export const ApiView = () => {
                 </div>
             </div>
 
-            <IntegrationGuide copyToClipboard={copyToClipboard} />
+            {/* ── Active Endpoints Section ── */}
+            <section className="bg-white rounded-xl border border-slate-100 overflow-hidden">
+                <div className="p-4 sm:p-5 border-b border-slate-50 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center">
+                            <Icons.server className="w-4 h-4 text-emerald-600" />
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-sm text-slate-800">Active Endpoints</h3>
+                            <p className="text-[10px] text-slate-500">Pilih endpoint aktif untuk digunakan di Integration Guide</p>
+                        </div>
+                    </div>
+                    <Badge variant="slate" className="px-2 py-0.5 text-[10px] font-medium bg-emerald-50 text-emerald-600">
+                        {activeNodes.filter(n => n.status === 'online').length} Online
+                    </Badge>
+                </div>
+                <div className="p-4 sm:p-5 bg-slate-50/30">
+                    {nodesLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                            <div className="w-5 h-5 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
+                        </div>
+                    ) : activeNodes.length === 0 ? (
+                        <div className="text-center py-8">
+                            <Icons.server className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                            <p className="text-sm text-slate-500">Tidak ada endpoint yang terdeteksi</p>
+                            <p className="text-[10px] text-slate-400 mt-1">Pastikan backend-system sudah berjalan dan mengirim heartbeat</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            {activeNodes.map((node) => {
+                                const isSelected = selectedEndpoint === node.endpointUrl;
+                                const isOnline = node.status === 'online';
+                                return (
+                                    <div
+                                        key={node.nodeId}
+                                        onClick={() => setSelectedEndpoint(node.endpointUrl)}
+                                        className={`group flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all duration-200 ${isSelected
+                                            ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-100'
+                                            : 'bg-white border-slate-200 hover:border-slate-300'
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${isOnline ? 'bg-emerald-500 shadow-sm shadow-emerald-200' : 'bg-slate-300'}`} />
+                                            <div className="min-w-0">
+                                                <code className={`text-sm font-mono font-medium truncate block ${isSelected ? 'text-indigo-700' : 'text-slate-700'}`}>
+                                                    {node.endpointUrl}
+                                                </code>
+                                                <p className="text-[10px] text-slate-400 mt-0.5">
+                                                    Node: {node.nodeId} · CPU: {node.cpuUsage} · RAM: {node.memoryUsage}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-1 shrink-0">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); copyToClipboard(node.endpointUrl, 'Endpoint URL copied!'); }}
+                                                className="w-7 h-7 rounded-md hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+                                                title="Copy endpoint URL"
+                                            >
+                                                <Icons.copy className="w-3.5 h-3.5" />
+                                            </button>
+                                            {isSelected && (
+                                                <div className="w-7 h-7 rounded-md bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                                    <Icons.check className="w-3.5 h-3.5" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </section>
+
+            <IntegrationGuide copyToClipboard={copyToClipboard} activeEndpoint={selectedEndpoint} />
 
             <ConfirmDialog
                 isOpen={!!confirmDialog}

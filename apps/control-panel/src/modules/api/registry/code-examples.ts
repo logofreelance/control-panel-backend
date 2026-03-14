@@ -5,7 +5,7 @@ export const CODE_EXAMPLES = {
   javascript: (apiUrl: string) => `// ============================================
 // lib/api.js — API Client Setup
 // ============================================
-const API_URL = '${apiUrl}/green';
+const API_URL = '${apiUrl}/api';
 const API_KEY = 'pk_your_api_key_here'; // dari Dashboard > API & Security
 
 // ── Base Fetch Helper ────────────────────────
@@ -110,7 +110,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = '${apiUrl}/green';
+  static const String baseUrl = '${apiUrl}/api';
   static const String apiKey = 'pk_your_api_key_here';
 
   // ── Base Request Helper ──────────────────────
@@ -197,7 +197,7 @@ class ApiService {
 // ============================================
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = '${apiUrl}/green';
+const API_URL = '${apiUrl}/api';
 const API_KEY = 'pk_your_api_key_here';
 
 // ── Base Request Helper ────────────────────────

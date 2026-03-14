@@ -14,6 +14,7 @@ const L = MODULE_LABELS.api;
 
 interface IntegrationGuideProps {
     copyToClipboard: (text: string, message?: string) => void;
+    activeEndpoint?: string;
 }
 
 // ── Step Indicator Component ──────────────────────
@@ -38,10 +39,10 @@ const MethodBadge = ({ method }: { method: string }) => {
     );
 };
 
-export const IntegrationGuide = ({ copyToClipboard }: IntegrationGuideProps) => {
+export const IntegrationGuide = ({ copyToClipboard, activeEndpoint }: IntegrationGuideProps) => {
     const [activeTab, setActiveTab] = React.useState<'js' | 'flutter' | 'reactNative'>('js');
     const [expandedSection, setExpandedSection] = React.useState<string | null>(null);
-    const apiUrl = env.API_URL || 'http://localhost:3001';
+    const apiUrl = activeEndpoint || env.API_URL || 'http://localhost:3001';
     const G = GUIDE_CONTENT;
 
     const tabs = [
@@ -100,8 +101,8 @@ export const IntegrationGuide = ({ copyToClipboard }: IntegrationGuideProps) => 
                         <h4 className="font-semibold text-slate-800 text-sm mb-1">{'3. '}{G.step3.title}</h4>
                         <p className="text-xs text-slate-500 mb-2 leading-relaxed">{G.step3.description}</p>
                         <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 p-2.5 rounded-lg min-w-0">
-                            <code className="text-xs font-mono text-indigo-600 truncate flex-1 min-w-0">{env.API_URL}/green</code>
-                            <button onClick={() => copyToClipboard(`${env.API_URL}/green`, L.messages.urlCopied)} className="text-slate-400 hover:text-indigo-600 transition-colors shrink-0">
+                            <code className="text-xs font-mono text-indigo-600 truncate flex-1 min-w-0">{apiUrl}/api</code>
+                            <button onClick={() => copyToClipboard(`${apiUrl}/api`, L.messages.urlCopied)} className="text-slate-400 hover:text-indigo-600 transition-colors shrink-0">
                                 <Icons.copy className="w-3.5 h-3.5" />
                             </button>
                         </div>
