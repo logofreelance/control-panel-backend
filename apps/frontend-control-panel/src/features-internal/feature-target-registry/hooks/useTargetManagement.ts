@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useTargetRegistry } from '../hooks/useTargetRegistry';
 import { filterTargets } from '../services/target-utils';
 import type { TargetSystem, CreateTargetInput } from '../types/target-registry.types';
@@ -14,6 +14,18 @@ export function useTargetManagement() {
     const [checkingId, setCheckingId] = useState<string | null>(null);
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
+    const searchRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+                setIsSearchFocused(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const handleAdd = useCallback(() => {
         setEditingTarget(null);
@@ -47,14 +59,18 @@ export function useTargetManagement() {
     }, [checkHealth]);
 
     const onlineCount = useMemo(
-        () => targets.filter(t => t.status === 'online').length,
+        () => (targets || []).filter(t => t.status === 'online').length,
         [targets]
     );
 
-    const filteredTargets = useMemo(
-        () => filterTargets(targets, searchQuery),
-        [targets, searchQuery]
-    );
+    const filteredTargets = useMemo(() => {
+        if (!searchQuery.trim()) return targets || [];
+        const q = searchQuery.toLowerCase();
+        return (targets || []).filter(t => 
+            t.name.toLowerCase().includes(q) || 
+            (t.description?.toLowerCase().includes(q))
+        );
+    }, [targets, searchQuery]);
 
     return {
         targets,
@@ -69,6 +85,9 @@ export function useTargetManagement() {
         setConfirmDeleteId,
         searchQuery,
         setSearchQuery,
+        isSearchFocused,
+        setIsSearchFocused,
+        searchRef,
         onlineCount,
         filteredTargets,
         handleAdd,
