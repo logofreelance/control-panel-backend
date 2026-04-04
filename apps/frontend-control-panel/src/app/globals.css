@@ -2,6 +2,17 @@
 @import "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700;1,800&display=swap";
 @source "../../../../packages/ui-kit/src";
 
+/* ULTIMATE GLOBAL SCROLLBAR HIDE */
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -117,68 +128,7 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
 }
 
-/* ============================================
-   CROSS-BROWSER SCROLLBAR - Auto-hide Style
-   - Hidden when idle, visible when scrolling
-   - Small size (4px), transparent/subtle
-   - Works on: Chrome, Firefox, Safari, Edge
-   ============================================ */
-
-/* Firefox */
-html,
-body,
-* {
-  scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
-}
-
-html.is-scrolling,
-html.is-scrolling *,
-body:hover,
-body:hover * {
-  scrollbar-color: rgba(160, 165, 170, 0.35) transparent;
-}
-
-/* Webkit (Chrome, Safari, Edge) */
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-  background: transparent;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: transparent;
-  border-radius: 4px;
-  transition: background 0.3s ease;
-}
-
-/* Show on scroll or hover */
-html.is-scrolling ::-webkit-scrollbar-thumb,
-*:hover::-webkit-scrollbar-thumb {
-  background: rgba(160, 165, 170, 0.35);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(140, 145, 150, 0.5);
-}
-
-/* Hide scrollbar arrows - ALL browsers */
-::-webkit-scrollbar-button,
-::-webkit-scrollbar-button:start:decrement,
-::-webkit-scrollbar-button:end:increment,
-::-webkit-scrollbar-button:vertical,
-::-webkit-scrollbar-button:horizontal,
-*::-webkit-scrollbar-button {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  background: transparent !important;
-  -webkit-appearance: none !important;
-}
+/* Scrollbar styling removed for Luxury Minimalist look */
 
 /* ============================================
    THEME PRESETS — Swappable via .theme-{name}

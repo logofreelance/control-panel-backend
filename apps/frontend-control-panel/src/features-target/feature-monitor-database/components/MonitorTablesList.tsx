@@ -67,14 +67,14 @@ const TableCard = ({ table, onDelete, dropping, isSystem }: { table: TableStat; 
                         <Icon className="w-4 h-4" />
                     </div>
                     <div>
-                        <h4 className="font-semibold text-slate-800 text-sm">{table.name}</h4>
+                        <h4 className="font-medium text-slate-800 text-sm">{table.name}</h4>
                         <div className="flex items-center gap-2 mt-0.5">
                             {isSystem && (
-                                <span className="text-[9px] font-medium bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                <span className="text-[9px] font-normal bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded flex items-center gap-1">
                                     <Icons.lock className="w-2.5 h-2.5" /> {L.system || 'System'}
                                 </span>
                             )}
-                            <span className="text-[10px] text-slate-500">{table.rows.toLocaleString()} {L.rows || 'Rows'}</span>
+                            <span className="text-[10px] text-slate-500 font-normal">{table.rows.toLocaleString()} {L.rows || 'Rows'}</span>
                         </div>
                     </div>
                 </div>
@@ -91,16 +91,16 @@ const TableCard = ({ table, onDelete, dropping, isSystem }: { table: TableStat; 
 
             <div className="grid grid-cols-3 gap-2 py-3 border-t border-slate-50">
                 <div className="text-center">
-                    <p className="text-[10px] uppercase text-slate-400 font-medium mb-1">{L.data || 'Data'}</p>
-                    <p className="text-xs font-semibold text-slate-700">{table.sizeMb} {L.mb || 'MB'}</p>
+                    <p className="text-[10px] uppercase text-slate-400 font-normal mb-1">{L.data || 'Data'}</p>
+                    <p className="text-xs font-medium text-slate-700">{table.sizeMb} {L.mb || 'MB'}</p>
                 </div>
                 <div className="text-center">
-                    <p className="text-[10px] uppercase text-slate-400 font-medium mb-1">{L.index || 'Index'}</p>
-                    <p className="text-xs font-semibold text-blue-600">{table.indexSizeMb} {L.mb || 'MB'}</p>
+                    <p className="text-[10px] uppercase text-slate-400 font-normal mb-1">{L.index || 'Index'}</p>
+                    <p className="text-xs font-medium text-blue-600">{table.indexSizeMb} {L.mb || 'MB'}</p>
                 </div>
                 <div className="text-center">
-                    <p className="text-[10px] uppercase text-slate-400 font-medium mb-1">{L.overhead || 'Overhead'}</p>
-                    <p className="text-xs font-semibold text-amber-600">{table.overheadMb} {L.mb || 'MB'}</p>
+                    <p className="text-[10px] uppercase text-slate-400 font-normal mb-1">{L.overhead || 'Overhead'}</p>
+                    <p className="text-xs font-medium text-amber-600">{table.overheadMb} {L.mb || 'MB'}</p>
                 </div>
             </div>
         </div>
@@ -132,7 +132,7 @@ const TableSection = ({
                 ) : (
                     <Icons.table className="w-4 h-4 text-teal-600" />
                 )}
-                <h4 className={`text-sm font-semibold ${isSystem ? 'text-amber-700' : 'text-slate-700'}`}>{title}</h4>
+                <h4 className={`text-sm font-medium ${isSystem ? 'text-amber-700' : 'text-slate-700'}`}>{title}</h4>
                 <span className="text-xs text-slate-400 ml-auto">{tables.length}</span>
             </div>
 
@@ -159,19 +159,19 @@ const TableSection = ({
                                             <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${isSystem ? 'bg-amber-50 text-amber-500' : 'bg-slate-50 text-slate-500'}`}>
                                                 <Icon className="w-3 h-3" />
                                             </div>
-                                            <p className="font-medium text-sm text-slate-700 truncate">{table.name}</p>
+                                            <p className="font-normal text-xs text-slate-700 truncate">{table.name}</p>
                                         </div>
                                     </td>
-                                    <td className="py-3 px-5 text-sm font-mono text-slate-600">
+                                    <td className="py-2.5 px-5 text-xs font-mono text-slate-600 font-normal">
                                         {table.rows.toLocaleString()}
                                     </td>
-                                    <td className="py-3 px-5 text-sm font-medium text-slate-700">
+                                    <td className="py-2.5 px-5 text-xs font-normal text-slate-700">
                                         {table.sizeMb} {L.mb || 'MB'}
                                     </td>
-                                    <td className="py-3 px-5 text-sm text-blue-600">
+                                    <td className="py-2.5 px-5 text-xs text-blue-600 font-normal">
                                         {table.indexSizeMb} {L.mb || 'MB'}
                                     </td>
-                                    <td className="py-3 px-5 text-sm text-amber-600">
+                                    <td className="py-2.5 px-5 text-xs text-amber-600 font-normal">
                                         {table.overheadMb} {L.mb || 'MB'}
                                     </td>
                                     {!isSystem && (
@@ -244,7 +244,7 @@ export const MonitorTablesList = ({ tables, loading, dropping, onDelete }: Monit
             {/* Header */}
             <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-slate-800">{L.databaseTables || 'Database Tables'}</h3>
+                    <h3 className="font-medium text-slate-800">{L.databaseTables || 'Database Tables'}</h3>
                     <div className="w-1.5 h-1.5 rounded-full bg-teal-500"></div>
                 </div>
                 <div className="flex items-center gap-2">

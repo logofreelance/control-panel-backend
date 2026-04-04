@@ -1,308 +1,428 @@
 'use client';
 
-/**
- * MonitorAnalyticsView - API Monitoring & Analytics Dashboard
- */
-
 import { useState } from 'react';
-import { Badge, Button, Input } from '@/components/ui';
+import {
+  Badge,
+  Button,
+  Input,
+  Card,
+  CardContent,
+  Skeleton,
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from '@/components/ui';
 import { Icons, MODULE_LABELS } from '@/lib/config/client';
 import { useMonitorAnalytics } from '../composables/useMonitorAnalytics';
 import { useToast } from '@/modules/_core';
 import type { ApiLog } from '../types';
+import { TargetLayout } from '@/components/layout/TargetLayout';
+import { TextHeading } from '@/components/ui/text-heading';
+import { cn } from '@/lib/utils';
 
 const L = MODULE_LABELS.monitorAnalytics;
 
-// Mobile-friendly log card component
-const LogCard = ({ log, isExpanded, onToggle }: { log: ApiLog; isExpanded: boolean; onToggle: () => void }) => {
-    const methodColors: Record<string, string> = {
-        GET: 'bg-blue-50 text-blue-600',
-        POST: 'bg-emerald-50 text-emerald-600',
-        PUT: 'bg-amber-50 text-amber-600',
-        DELETE: 'bg-red-50 text-red-600',
-        PATCH: 'bg-purple-50 text-purple-600',
-    };
-
-    return (
-        <div className="bg-white rounded-xl shadow-sm shadow-slate-200/50 overflow-hidden">
-            <div
-                className="p-4 flex items-center gap-3 cursor-pointer hover:bg-slate-50/50 transition-colors"
-                onClick={onToggle}
-            >
-                <Badge variant={log.statusCode < 400 ? 'success' : log.statusCode < 500 ? 'warning' : 'danger'}>
-                    {log.statusCode}
-                </Badge>
-                <span className={`text-[9px] font-medium px-2 py-0.5 rounded shrink-0 ${methodColors[log.method] || 'bg-slate-100 text-slate-600'}`}>
-                    {log.method}
-                </span>
-                <span className="flex-1 text-xs font-mono text-slate-700 truncate min-w-0">{log.endpoint}</span>
-                <span className="text-[10px] text-slate-400 shrink-0">{log.durationMs}ms</span>
-                <Icons.chevronDown className={`w-4 h-4 text-slate-400 transition-transform shrink-0 ${isExpanded ? 'rotate-180' : ''}`} />
-            </div>
-            {isExpanded && (
-                <div className="px-4 pb-4 pt-2 border-t border-slate-50 space-y-3">
-                    <div className="grid grid-cols-2 gap-3 text-xs">
-                        <div>
-                            <p className="text-slate-400 text-[10px] mb-1">{L.labels.endpoint}</p>
-                            <p className="font-mono text-slate-700 break-all">{log.endpoint}</p>
-                        </div>
-                        <div>
-                            <p className="text-slate-400 text-[10px] mb-1">{L.labels.ip}</p>
-                            <p className="font-mono text-slate-700">{log.ip || '-'}</p>
-                        </div>
-                        <div>
-                            <p className="text-slate-400 text-[10px] mb-1">{L.labels.origin}</p>
-                            <p className="font-mono text-slate-700 break-all">{log.origin || '-'}</p>
-                        </div>
-                        <div>
-                            <p className="text-slate-400 text-[10px] mb-1">{L.labels.time}</p>
-                            <p className="font-mono text-slate-700">{new Date(log.createdAt).toLocaleString()}</p>
-                        </div>
-                    </div>
-                    <div>
-                        <p className="text-slate-400 text-[10px] mb-1">{L.labels.userAgent}</p>
-                        <p className="font-mono text-[10px] text-slate-600 break-all">{log.userAgent || '-'}</p>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-};
-
 export const MonitorAnalyticsView = () => {
-    const { addToast } = useToast();
-    const {
-        loading,
-        total,
-        success,
-        failed,
-        avgLatency,
-        recentLogs,
-        refresh
-    } = useMonitorAnalytics();
+  const { addToast } = useToast();
+  const { loading, total, success, failed, avgLatency, recentLogs, refresh } =
+    useMonitorAnalytics();
 
-    const [searchQuery, setSearchQuery] = useState('');
-    const [methodFilter, setMethodFilter] = useState<string | null>(null);
-    const [statusFilter, setStatusFilter] = useState<'all' | '2xx' | '4xx' | '5xx'>('all');
-    const [expandedLogId, setExpandedLogId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [methodFilter, setMethodFilter] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'all' | '2xx' | '4xx' | '5xx'>('all');
 
-    const filteredLogs = recentLogs.filter((log: ApiLog) => {
-        if (searchQuery && !log.endpoint.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-        if (methodFilter && log.method !== methodFilter) return false;
-        if (statusFilter === '2xx' && (log.statusCode < 200 || log.statusCode >= 300)) return false;
-        if (statusFilter === '4xx' && (log.statusCode < 400 || log.statusCode >= 500)) return false;
-        if (statusFilter === '5xx' && log.statusCode < 500) return false;
-        return true;
-    });
+  const filteredLogs = recentLogs.filter((log: ApiLog) => {
+    if (searchQuery && !log.endpoint.toLowerCase().includes(searchQuery.toLowerCase()))
+      return false;
+    if (methodFilter && log.method !== methodFilter) return false;
+    if (statusFilter === '2xx' && (log.statusCode < 200 || log.statusCode >= 300)) return false;
+    if (statusFilter === '4xx' && (log.statusCode < 400 || log.statusCode >= 500)) return false;
+    if (statusFilter === '5xx' && log.statusCode < 500) return false;
+    return true;
+  });
 
-    const handleExportCsv = () => {
-        const headers = [L.labels.time, L.labels.method, L.labels.endpoint, L.labels.status, L.labels.latency, L.labels.ip, L.labels.origin, L.labels.userAgent];
-        const rows = filteredLogs.map((log: ApiLog) => [
-            new Date(log.createdAt).toISOString(),
-            log.method,
-            log.endpoint,
-            log.statusCode,
-            log.durationMs,
-            log.ip || '',
-            log.origin || '',
-            log.userAgent || ''
-        ]);
-        const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `api-logs-${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        addToast(L.messages.exported, 'success');
-    };
-
-    const clearFilters = () => {
-        setSearchQuery('');
-        setMethodFilter(null);
-        setStatusFilter('all');
-    };
-
-    const hasFilters = searchQuery || methodFilter || statusFilter !== 'all';
-
-    const LoadingOverlay = () => (
-        <div className="absolute inset-0 bg-white z-10 flex items-center justify-center rounded-xl">
-            <div className="w-6 h-6 border-2 border-(--primary) border-t-transparent rounded-full animate-spin shadow-sm" />
-        </div>
+  const handleExportCsv = () => {
+    const headers = [
+      L.labels.time,
+      L.labels.method,
+      L.labels.endpoint,
+      L.labels.status,
+      L.labels.latency,
+      L.labels.ip,
+      L.labels.origin,
+      L.labels.userAgent,
+    ];
+    const rows = filteredLogs.map((log: ApiLog) => [
+      new Date(log.createdAt).toISOString(),
+      log.method,
+      log.endpoint,
+      log.statusCode,
+      log.durationMs,
+      log.ip || '',
+      log.origin || '',
+      log.userAgent || '',
+    ]);
+    const csv = [headers.join(','), ...rows.map((r) => r.map((c) => `"${c}"`).join(','))].join(
+      '\n',
     );
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `api-logs-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    addToast(L.messages.exported.toLowerCase(), 'success');
+  };
 
-    return (
-        <div className="space-y-4 sm:space-y-6 overflow-hidden">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
-                        <Icons.monitor className="w-5 h-5 text-orange-600" />
-                    </div>
-                    <div>
-                        <h1 className="text-xl sm:text-2xl font-semibold text-slate-800">{L.title}</h1>
-                        <p className="text-xs sm:text-sm text-slate-500">{L.subtitle}</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2 self-start sm:self-auto">
-                    <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-lg shadow-sm shadow-slate-200/50">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                        <span className="text-[10px] font-medium text-slate-500">{L.labels.liveStatus}</span>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => { refresh(); addToast(L.messages.refreshed, 'success'); }}>
-                        <Icons.refresh className="w-3.5 h-3.5" />
-                    </Button>
-                </div>
+  const metrics = [
+    {
+      id: 'total',
+      label: L.labels.totalRequests.toLowerCase(),
+      value: total.toLocaleString(),
+      icon: Icons.activity,
+      color: 'text-chart-1',
+    },
+    {
+      id: 'success',
+      label: L.labels.successful.toLowerCase(),
+      value: success.toLocaleString(),
+      icon: Icons.checkCircle,
+      color: 'text-chart-2',
+    },
+    {
+      id: 'failed',
+      label: L.labels.failed.toLowerCase(),
+      value: failed.toLocaleString(),
+      icon: Icons.alertTriangle,
+      color: 'text-destructive',
+    },
+    {
+      id: 'latency',
+      label: L.labels.avgLatency.toLowerCase(),
+      value: `${avgLatency}${L.labels.ms.toLowerCase()}`,
+      icon: Icons.zap,
+      color: 'text-chart-3',
+    },
+  ];
+  return (
+    <TargetLayout>
+      <div className="relative w-full min-h-screen bg-background font-instrument overflow-x-hidden pb-10 sm:pb-20">
+        <main className="relative z-10 w-full max-w-7xl mx-auto py-6 md:py-10 px-4 md:px-10 flex flex-col gap-10 md:gap-14 animate-spring">
+          {/* BOLD COLOR HEADER - CLEAN TYPO */}
+          <header className="flex items-center justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <TextHeading as="h1" size="h3">
+                {L.title}
+              </TextHeading>
+              <span className="text-sm md:text-lg text-muted-foreground/40 font-normal lowercase tracking-normal">
+                real-time engine analytics
+              </span>
             </div>
 
-            {/* Stats Grid - 2x2 on mobile */}
-            <section className="grid grid-cols-2 gap-3 relative min-h-[150px]">
-                {loading && <LoadingOverlay />}
-                <div className="bg-white rounded-xl p-4 shadow-sm shadow-slate-200/50">
-                    <div className="flex justify-between items-start mb-2">
-                        <p className="text-[10px] sm:text-xs font-medium text-slate-500">{L.labels.totalRequests}</p>
-                        <div className="w-6 h-6 rounded-lg bg-slate-900 flex items-center justify-center">
-                            <Icons.stats className="w-3 h-3 text-white" />
-                        </div>
-                    </div>
-                    <p className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900">{total.toLocaleString()}</p>
-                </div>
+            <Button
+              variant="default"
+              onClick={() => {
+                refresh();
+                addToast(L.messages.refreshed.toLowerCase(), 'success');
+              }}
+              disabled={loading}
+              className="group rounded-full size-10 p-0 flex items-center justify-center gap-0 transition-all duration-500 ease-in-out active:scale-95 md:hover:w-44 md:hover:px-1 md:hover:gap-3 overflow-hidden"
+            >
+              <Icons.refresh className={cn('size-4', loading && 'animate-spin')} />
+              <span className="max-w-0 opacity-0 overflow-hidden transition-all duration-500 whitespace-nowrap lowercase md:group-hover:max-w-xs group-hover:max-w-0 md:group-hover:opacity-100">
+                {loading ? 'synchronizing' : 'sync data'}
+              </span>
+            </Button>
+          </header>
 
-                <div className="bg-white rounded-xl p-4 shadow-sm shadow-slate-200/50">
-                    <div className="flex justify-between items-start mb-2">
-                        <p className="text-[10px] sm:text-xs font-medium text-slate-500">{L.labels.successful}</p>
-                        <div className="w-6 h-6 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
-                            <Icons.checkCircle className="w-3 h-3" />
-                        </div>
-                    </div>
-                    <p className="text-xl sm:text-2xl font-semibold tracking-tight text-emerald-600">{success.toLocaleString()}</p>
-                </div>
-
-                <div className="bg-white rounded-xl p-4 shadow-sm shadow-slate-200/50">
-                    <div className="flex justify-between items-start mb-2">
-                        <p className="text-[10px] sm:text-xs font-medium text-slate-500">{L.labels.failed}</p>
-                        <div className="w-6 h-6 rounded-lg bg-red-50 flex items-center justify-center text-red-600">
-                            <Icons.close className="w-3 h-3" />
-                        </div>
-                    </div>
-                    <p className="text-xl sm:text-2xl font-semibold tracking-tight text-red-500">{failed.toLocaleString()}</p>
-                </div>
-
-                <div className="bg-white rounded-xl p-4 shadow-sm shadow-slate-200/50">
-                    <div className="flex justify-between items-start mb-2">
-                        <p className="text-[10px] sm:text-xs font-medium text-slate-500">{L.labels.avgLatency}</p>
-                        <div className="w-6 h-6 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
-                            <Icons.zap className="w-3 h-3" />
-                        </div>
-                    </div>
-                    <p className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900">
-                        {avgLatency}<span className="text-xs text-slate-400 font-normal ml-0.5">{L.labels.ms}</span>
-                    </p>
-                </div>
-            </section>
-
-            {/* Filters - Stacked on mobile, inline on desktop */}
-            <section className="bg-white rounded-xl shadow-sm shadow-slate-200/50 p-3 sm:p-4 space-y-3">
-                {/* Search */}
-                <div className="relative">
-                    <Icons.search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <Input
-                        placeholder={L.labels.searchPlaceholder}
-                        className="pl-10 bg-slate-50 border-none focus:bg-white text-sm w-full"
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
-                    />
-                </div>
-
-                {/* Filter buttons - scrollable on mobile */}
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 sm:items-center">
-                    <div className="flex gap-1 overflow-x-auto pb-1 -mb-1">
-                        {['GET', 'POST', 'PUT', 'DEL'].map((method, i) => {
-                            const fullMethod = method === 'DEL' ? 'DELETE' : method;
-                            return (
-                                <button
-                                    key={method}
-                                    onClick={() => setMethodFilter(methodFilter === fullMethod ? null : fullMethod)}
-                                    className={`px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-medium transition-all shrink-0 ${methodFilter === fullMethod
-                                        ? 'bg-slate-800 text-white'
-                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                        }`}
-                                >
-                                    {method}
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    <div className="h-4 w-px bg-slate-200 hidden sm:block"></div>
-
-                    <div className="flex gap-1 overflow-x-auto pb-1 -mb-1">
-                        {[
-                            { key: 'all', label: 'All' },
-                            { key: '2xx', label: '2xx' },
-                            { key: '4xx', label: '4xx' },
-                            { key: '5xx', label: '5xx' },
-                        ].map(s => (
-                            <button
-                                key={s.key}
-                                onClick={() => setStatusFilter(s.key as typeof statusFilter)}
-                                className={`px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-medium transition-all shrink-0 ${statusFilter === s.key
-                                    ? 'bg-slate-800 text-white'
-                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                    }`}
-                            >
-                                {s.label}
-                            </button>
-                        ))}
-                    </div>
-
-                    <div className="flex gap-2 sm:ml-auto">
-                        {hasFilters && (
-                            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs">
-                                <Icons.close className="w-3 h-3" />
-                            </Button>
-                        )}
-                        <Button variant="outline" size="sm" onClick={handleExportCsv} className="text-xs">
-                            <Icons.download className="w-3.5 h-3.5 sm:mr-1" />
-                            <span className="hidden sm:inline">{L.labels.exportCsv}</span>
-                        </Button>
-                    </div>
-                </div>
-            </section>
-
-            {/* Logs Header */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-sm text-slate-900">{L.labels.recentActivity}</h3>
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                </div>
-                <span className="text-[10px] text-slate-500">
-                    {filteredLogs.length} / {recentLogs.length}
-                </span>
-            </div>
-
-            {/* Logs List - Cards for all screen sizes */}
-            <section className="space-y-2 relative min-h-[200px]">
-                {loading && <LoadingOverlay />}
-                {filteredLogs.length === 0 ? (
-                    <div className="bg-white rounded-xl p-8 text-center text-slate-400 shadow-sm shadow-slate-200/50">
-                        <Icons.document className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                        <p className="text-sm font-medium">{L.labels.noLogs}</p>
-                    </div>
-                ) : (
-                    filteredLogs.map((log: ApiLog) => (
-                        <LogCard
-                            key={log.id}
-                            log={log}
-                            isExpanded={expandedLogId === log.id}
-                            onToggle={() => setExpandedLogId(expandedLogId === log.id ? null : log.id)}
-                        />
-                    ))
+          {/* METRICS GRID - VIBRANT COLORS - NORMAL TYPO */}
+          <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
+            {metrics.map((m) => (
+              <Card
+                key={m.id}
+                className={cn(
+                  'group relative bg-card border-2 rounded-3xl overflow-hidden shadow-none transition-all duration-300 opacity-100',
+                  m.id === 'total' && 'border-chart-1/30 hover:border-chart-1/100',
+                  m.id === 'success' && 'border-chart-2/30 hover:border-chart-2/100',
+                  m.id === 'failed' && 'border-destructive/30 hover:border-destructive/100',
+                  m.id === 'latency' && 'border-chart-3/30 hover:border-chart-3/100',
                 )}
-            </section>
-        </div>
-    );
+              >
+                {/* BOLD SILHOUETTE */}
+                <div
+                  className={cn(
+                    'absolute -right-6 -bottom-6 size-24 sm:size-32 transition-transform group-hover:scale-110 opacity-5 blur-2xl',
+                    m.color,
+                  )}
+                >
+                  <m.icon className="size-full rotate-12" />
+                </div>
+
+                <CardContent className="relative px-4 py-2 sm:px-5 sm:py-3 flex flex-col gap-2.5 sm:gap-3.5">
+                  <div className="flex justify-between items-start">
+                    <span className="text-sm md:text-base font-normal text-muted-foreground/40 lowercase tracking-normal leading-none">
+                      {m.label}
+                    </span>
+                    <div
+                      className={cn(
+                        'size-8 sm:size-10 rounded-xl flex items-center justify-center transition-transform group-hover:-rotate-6 bg-background border border-border/5',
+                        m.color,
+                      )}
+                    >
+                      <m.icon className="size-4 sm:size-5" />
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <TextHeading
+                      as="p"
+                      size="h1"
+                      className="text-4xl sm:text-5xl font-medium tracking-normal leading-none text-foreground"
+                    >
+                      {loading ? <Skeleton className="h-10 w-20" /> : m.value}
+                    </TextHeading>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={cn('size-1.5 rounded-full', m.color.replace('text-', 'bg-'))}
+                      />
+                      <span className="text-sm md:text-base font-normal text-muted-foreground/30 lowercase tracking-normal">
+                        live data ({total.toLocaleString()})
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </section>
+
+          {/* ACTIVITY LOGS SECTION - BOLD CONTRAST HEADER */}
+          <div className="flex flex-col gap-8 px-1">
+            <div className="flex flex-col gap-6">
+              <div className="flex items-center gap-3 px-1">
+                <TextHeading
+                  as="h2"
+                  size="h3"
+                  weight="medium"
+                  className="lowercase text-xl sm:text-2xl text-foreground tracking-normal"
+                >
+                  request logs
+                </TextHeading>
+                <span className="text-[10px] sm:text-xs text-muted-foreground/30 font-normal lowercase tracking-normal bg-muted/20 px-2 py-0.5 rounded-lg border border-border/5">
+                  {filteredLogs.length}/{recentLogs.length}
+                </span>
+              </div>
+
+              <div className="flex flex-col md:flex-row items-center gap-4 w-full">
+                <div className="relative flex-1 w-full flex items-center h-12 p-1 bg-muted/40 border border-border/40 rounded-2xl overflow-hidden focus-within:border-primary/50 transition-all">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <Icons.search className="size-4 text-muted-foreground/50" />
+                  </div>
+
+                  <Input
+                    placeholder="search by endpoint..."
+                    className="flex-1 pl-11 pr-32 sm:pr-40 h-full bg-transparent border-none focus-visible:ring-0 text-sm sm:text-base placeholder:text-muted-foreground/50 text-foreground lowercase tracking-normal font-normal"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+
+                  <div className="absolute right-1 flex items-center">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="h-10 px-3 rounded-xl text-sm sm:text-base font-normal lowercase transition-all bg-background border border-border/40 text-foreground flex items-center gap-2 hover:bg-muted/20 active:scale-95 cursor-pointer outline-none shadow-none">
+                        <Icons.filter
+                          className={cn(
+                            'size-3.5 sm:size-4 text-muted-foreground',
+                            methodFilter && 'text-primary',
+                          )}
+                        />
+                        <span className="hidden sm:inline">
+                          {methodFilter ? methodFilter.toLowerCase() : 'all methods'}
+                        </span>
+                        <span className="sm:hidden">
+                          {methodFilter ? methodFilter.toLowerCase() : 'all'}
+                        </span>
+                        <Icons.chevronDown className="size-3 opacity-20" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className="w-56 rounded-2xl border border-border/10 bg-background/95 backdrop-blur-xl shadow-none p-1.5 flex flex-col gap-0.5"
+                      >
+                        <DropdownMenuRadioGroup
+                          value={methodFilter || 'ALL'}
+                          onValueChange={(v: string) => setMethodFilter(v === 'ALL' ? null : v)}
+                        >
+                          {['ALL', 'GET', 'POST', 'PUT', 'DELETE'].map((m) => (
+                            <DropdownMenuRadioItem
+                              key={m}
+                              value={m}
+                              className="rounded-xl px-4 py-2.5 text-sm lowercase font-normal focus:bg-muted/50 transition-colors cursor-pointer data-checked:bg-primary/10 data-checked:text-primary"
+                            >
+                              {m === 'DELETE' ? 'del' : m.toLowerCase()}
+                            </DropdownMenuRadioItem>
+                          ))}
+                        </DropdownMenuRadioGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* TABLE - VIBRANT STATUS - CLEAN TYPO */}
+            <Card className="border border-border/10 rounded-[2.5rem] overflow-hidden bg-card shadow-none opacity-100">
+              <div className="overflow-x-auto scrollbar-hide">
+                <Table className="w-full">
+                  <TableHeader className="bg-muted/10 border-b border-border/5">
+                    <TableRow className="hover:bg-transparent border-none">
+                      <TableHead className="h-14 px-3 sm:px-8 text-left text-[11px] font-normal lowercase text-muted-foreground/40">
+                        status
+                      </TableHead>
+                      <TableHead className="h-14 px-2 sm:px-4 text-center text-[11px] font-normal lowercase text-muted-foreground/40">
+                        method
+                      </TableHead>
+                      <TableHead className="h-14 px-6 text-left text-[11px] font-normal lowercase text-muted-foreground/40">
+                        endpoint
+                      </TableHead>
+                      <TableHead className="h-14 px-6 text-right text-[11px] font-normal lowercase text-muted-foreground/40 hidden md:table-cell">
+                        latency
+                      </TableHead>
+                      <TableHead className="h-14 px-8 text-right text-[11px] font-normal lowercase text-muted-foreground/40 hidden md:table-cell">
+                        time
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {loading ? (
+                      [1, 2, 3, 4, 5].map((i) => (
+                        <TableRow key={i} className="border-border/5">
+                          <TableCell className="h-16 px-8">
+                            <Skeleton className="h-4 w-12 rounded-lg" />
+                          </TableCell>
+                          <TableCell className="h-16 text-center">
+                            <Skeleton className="h-6 w-16 mx-auto rounded-lg" />
+                          </TableCell>
+                          <TableCell className="h-16 px-6">
+                            <Skeleton className="h-4 w-full max-w-[200px] rounded-lg" />
+                          </TableCell>
+                          <TableCell className="h-16 text-right px-6 hidden md:table-cell">
+                            <Skeleton className="h-4 w-12 ml-auto rounded-lg" />
+                          </TableCell>
+                          <TableCell className="h-16 text-right px-8 hidden md:table-cell">
+                            <Skeleton className="h-4 w-20 ml-auto rounded-lg" />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : filteredLogs.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={5}
+                          className="h-40 text-center text-muted-foreground/40 font-normal lowercase italic-none"
+                        >
+                          no matching engine logs found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredLogs.map((log: ApiLog, i) => (
+                        <TableRow
+                          key={i}
+                          className="group border-border/5 hover:bg-muted/10 transition-all font-instrument"
+                        >
+                          <TableCell className="px-3 sm:px-8 py-5">
+                            <div className="flex items-center gap-4">
+                              <div
+                                className={cn(
+                                  'size-2 rounded-full',
+                                  log.statusCode >= 200 && log.statusCode < 300
+                                    ? 'bg-chart-2 shadow-[0_0_12px_var(--chart-2)]'
+                                    : 'bg-destructive shadow-[0_0_12px_var(--destructive)]',
+                                )}
+                              />
+                              <span
+                                className={cn(
+                                  'text-base font-semibold tracking-tight leading-none',
+                                  log.statusCode >= 200 && log.statusCode < 300
+                                    ? 'text-foreground'
+                                    : 'text-destructive',
+                                )}
+                              >
+                                {log.statusCode}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center px-1 sm:px-3 py-5">
+                            <Badge
+                              className={cn(
+                                'h-7 px-3 rounded-full border-none font-semibold text-xs lowercase transition-colors',
+                                log.method === 'GET'
+                                  ? 'bg-chart-1/10 text-chart-1'
+                                  : log.method === 'POST'
+                                    ? 'bg-chart-2/10 text-chart-2'
+                                    : log.method === 'PUT'
+                                      ? 'bg-chart-3/10 text-chart-3'
+                                      : 'bg-destructive/10 text-destructive',
+                              )}
+                            >
+                              {log.method.toLowerCase()}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="px-6 py-5 font-normal text-base text-foreground/90 lowercase tracking-normal">
+                            <div className="flex flex-col gap-1.5">
+                              <span className="break-all sm:break-normal">
+                                {log.endpoint || '/'}
+                              </span>
+                              <div className="flex md:hidden items-center gap-3 text-[11px] text-muted-foreground/30 font-normal">
+                                <span>{log.durationMs}ms</span>
+                                <span className="size-1 rounded-full bg-border/50" />
+                                <span>
+                                  {new Date(log.createdAt).toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit',
+                                    hour12: false,
+                                  })}
+                                </span>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="px-6 py-5 text-right hidden md:table-cell">
+                            <span className="text-sm font-medium text-foreground">
+                              {log.durationMs}
+                              <span className="text-[10px] text-muted-foreground/30 font-normal ml-1 lowercase">
+                                ms
+                              </span>
+                            </span>
+                          </TableCell>
+                          <TableCell className="px-8 py-5 text-right whitespace-nowrap hidden md:table-cell">
+                            <span className="text-sm font-normal text-muted-foreground/30 lowercase">
+                              {new Date(log.createdAt).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                                hour12: false,
+                              })}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+          </div>
+        </main>
+      </div>
+    </TargetLayout>
+  );
 };

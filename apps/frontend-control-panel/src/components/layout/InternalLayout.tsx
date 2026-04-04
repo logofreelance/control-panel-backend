@@ -4,8 +4,6 @@ import { useState, useCallback, ReactNode } from 'react';
 import Link from 'next/link';
 import {
   Button,
-  Avatar, 
-  AvatarFallback, 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
@@ -38,11 +36,11 @@ export function InternalLayout({
 
   return (
     <div className="relative flex flex-col min-h-screen w-full overflow-hidden bg-background font-instrument">
-      {/* THE LUXURY FLOATING CAPSULE - NO SHADOW, ENLARGED Branding */}
+      {/* THE LUXURY FLOATING CAPSULE */}
       <header className="sticky top-0 z-50 w-full px-2 md:px-4 pt-2 md:pt-4 pointer-events-none transition-all duration-300">
         <div className="mx-auto w-full max-w-7xl bg-background/80 backdrop-blur-md border border-border/40 h-14 md:h-16 rounded-xl md:rounded-2xl flex items-center justify-between px-3 md:px-6 pointer-events-auto transition-all shadow-none">
           <div className="flex items-center gap-3 md:gap-6">
-             {/* SITE LOGO AND NAME - OPTIMIZED FOR MOBILE */}
+             {/* SITE LOGO AND NAME */}
              <Link href="/" className="flex items-center gap-2 md:gap-4 group px-1">
                 <div className="size-9 md:size-10 aspect-square shrink-0 rounded-xl bg-primary flex items-center justify-center text-primary-foreground group-hover:scale-105 transition-transform duration-300">
                    <Icons.rocket className="size-4 md:size-5" />
@@ -67,7 +65,7 @@ export function InternalLayout({
                 </Button>
 
                 <DropdownMenu open={showProfileMenu} onOpenChange={setShowProfileMenu}>
-                  <DropdownMenuTrigger asChild>
+                  <DropdownMenuTrigger render={
                     <Button variant="ghost" className="h-10 md:h-12 px-3 md:px-4 rounded-xl hover:bg-muted transition-all flex items-center gap-4 outline-none group bg-transparent border-none p-0">
                         <div className="size-8 md:size-10 rounded-xl bg-primary/5 text-primary flex items-center justify-center transition-transform group-hover:scale-105 duration-300 border-none shadow-none">
                            <Icons.shield className="size-4 md:size-5" />
@@ -77,7 +75,7 @@ export function InternalLayout({
                           <span className="text-xs md:text-sm font-normal text-muted-foreground leading-none opacity-50">Access protocol</span>
                         </div>
                     </Button>
-                  </DropdownMenuTrigger>
+                  } />
                   <DropdownMenuContent align="end" className="w-64 mt-3 rounded-xl border border-border/40 p-2 animate-in fade-in slide-in-from-top-2 bg-background shadow-2xl font-instrument flex flex-col gap-1">
                     <div className="p-3 mb-1 bg-muted/40 rounded-lg border border-border/10">
                       <p className="text-xs text-muted-foreground font-normal mb-1 opacity-50">Authentication status</p>
@@ -105,7 +103,7 @@ export function InternalLayout({
                       className="rounded-lg flex items-center gap-3 py-3 px-3 text-destructive cursor-pointer hover:bg-destructive/10 transition-colors font-normal text-base"
                     >
                       <Icons.logout className="size-4 opacity-70" />
-                      <span>Logout</span>
+                      <span>Logout Account</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

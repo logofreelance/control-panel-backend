@@ -147,6 +147,8 @@ import {
   Gem,
   Smartphone,
   GitBranch,
+  Layout,
+  Workflow,
 
   // Types
   type LucideIcon,
@@ -230,6 +232,7 @@ export const Icons = {
   hash: Hash,
   number: Hash,
   uuid: Fingerprint,
+  fingerprint: Fingerprint,
 
   // Security
   lock: Lock,
@@ -317,6 +320,8 @@ export const Icons = {
   status: CircleDot,
   gem: Gem,
   diamond: Gem,
+  layout: Layout,
+  workflow: Workflow,
   // Aliases for consistency
   trash2: Trash2,
   alertTriangle: AlertTriangle,
